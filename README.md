@@ -3,7 +3,6 @@
 **Measured analysis of compute amplification in agentic AI systems, including empirical results and theoretical modeling.**
 
 *Independent research by Sivamani Battala*  
-📄 Published paper: https://doi.org/10.5281/zenodo.19469219
 
 ---
 
