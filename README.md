@@ -1,6 +1,7 @@
 # AI Compute Criticality
 
-**Why agentic AI costs 100x more than predicted—measured, explained, and solved.**
+**Measured analysis of compute amplification in agentic AI systems — including empirical results and theoretical modeling.
+**
 
 *Independent research by Sivamani Battala*
 
