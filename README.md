@@ -1,109 +1,202 @@
 # AI Compute Criticality
 
-**Measured analysis of compute amplification in agentic AI systems — including empirical results and theoretical modeling.
-**
+**Measured analysis of compute amplification in agentic AI systems, including empirical results and theoretical modeling.**
 
-*Independent research by Sivamani Battala*
-
----
-
-## The Finding
-
-Agentic AI systems use **13-100x more compute** than scaling laws predict. Not from bigger models. From recursive reasoning.
-
-We measured it across 15 controlled experiments, derived the mathematics, and built tools to detect it in production.
+*Independent research by Sivamani Battala*  
+📄 Published paper: https://doi.org/10.5281/zenodo.19469219
 
 ---
 
-## The Problem
+## Table of Contents
+- [Overview](#overview)
+- [Main Finding](#main-finding)
+- [The Core Problem](#the-core-problem)
+- [What We Measured](#what-we-measured)
+- [The Math](#the-math)
+- [Why Scaling Laws Need an Update](#why-scaling-laws-need-an-update)
+- [Repository Contents](#repository-contents)
+- [Quick Start](#quick-start)
+- [Core Concepts](#core-concepts)
+- [Nuclear Analogy](#nuclear-analogy-conceptual-mapping)
+- [Why This Matters](#why-this-matters)
+- [Validation](#validation)
+- [Audience Guide](#audience-guide)
+- [Future Work](#future-work)
+- [Citation](#citation)
+- [License](#license)
+- [Contact](#contact)
 
-**2024**: One prompt → one response → predictable cost
+---
 
-**2025**: One task → agent searches → reads results → verifies → spawns subtasks → calls itself → unpredictable cascade
+## Overview
 
-When average child operations per parent approaches 1, cost becomes exponential.
+This repository studies how compute cost changes when a language model is used in an agentic workflow with recursive reasoning, verification, and subtask execution.
+
+The core idea:
+
+- A normal LLM call is one prompt → one response  
+- Agentic systems create chains of calls  
+- These chains form a branching process  
+- This branching increases total compute  
+
+This project measures that effect, models it mathematically, and provides tools to analyze it.
+
+---
+
+## Main Finding
+
+Agentic workflows produce **significantly higher compute usage** than single-call baselines.
+
+Key insight:
+
+> Compute increases not just from larger models, but from recursive execution.
+
+In practice:
+
+- One prompt becomes multiple calls  
+- Responses trigger verification and retries  
+- Subtasks create deeper chains  
+- Total compute grows with depth  
+
+This is called **compute amplification**.
+
+---
+
+## The Core Problem
+
+### Static inference (earlier systems)
+
+```text
+One prompt → one response → predictable cost
+```
+
+### Agentic inference (modern systems)
+
+```text
+One task → search → read → verify → refine → spawn subtasks → repeat
+```
+
+This creates a cascade.
+
+When the average number of child operations per step approaches 1, compute becomes unstable.
 
 ---
 
 ## What We Measured
 
 | Mode | Operations | Compute | Amplification | Branching Factor |
-|------|-----------|---------|---------------|------------------|
+|------|------------|---------|---------------|------------------|
 | Baseline | 1.0 | 8.5M | 1.0x | — |
 | Recursive | 6.4 | 71.1M | 8.3x | 0.84 |
 | Agentic | 6.1 | 38.7M | 4.5x | 0.84 |
 
-**Peak**: 21x amplification in single trials.
-
-**Critical threshold**: b=1. We measured b=0.84. Systems are 84% of the way to instability.
+- Peak amplification: **21×**
+- Critical threshold: **b = 1**
+- Measured value: **b = 0.84**
 
 ---
 
 ## The Math
 
-```
+Branching factor:
+
+```text
 b = mean children per operation
-
-b < 1:  Expected operations = 1/(1-b)     [stable]
-b → 1:  Variance ∝ b/(1-b)³               [explodes]
-b > 1:  Operations ∝ (1+ρ)^depth          [exponential]
 ```
 
-Our b=0.84 predicts 6.25 operations. We observed 6.1-6.4. Theory matches reality.
+Behavior:
+
+```text
+b < 1   → stable  
+b → 1   → high variance  
+b > 1   → exponential growth  
+```
+
+Expected operations:
+
+```text
+Expected = 1 / (1 - b)
+```
+
+Result:
+
+```text
+b = 0.84  
+Expected ≈ 6.25  
+Observed ≈ 6.1–6.4  
+```
+
+Model matches experiment.
 
 ---
 
-## Why Scaling Laws Broke
+## Why Scaling Laws Need an Update
 
-**Old formula**:
-```
+Traditional:
+
+```text
 Performance = f(Parameters, Data, Training_Compute)
 ```
 
-**New reality**:
-```
+Agentic systems:
+
+```text
 Performance = f(Parameters, Data, Training_Compute, Inference_Depth)
 ```
 
-That fourth term was zero in 2024. It dominates cost in 2025.
+Inference depth captures recursive execution.
 
 ---
 
-## What's Inside
+## Repository Contents
 
-**Papers** (23 + 18 pages)  
-Complete mathematical derivations. Nuclear reactor kinetics → branching processes → AI compute.
+### 📄 Paper
+- Research documentation and derivations  
+- DOI: https://doi.org/10.5281/zenodo.19469219  
 
-**Code**  
-Production-ready tools to measure branching factor from logs and detect approaching criticality.
+### 💻 Code
+- Experiment scripts  
+- Logging tools  
+- Branching factor estimation  
 
-**Data**  
-Anonymized execution traces from all experiments.
+### 📊 Data
+- Execution traces and logs  
 
-**Documentation**  
-Plain-language explanations of core concepts.
+### 📘 Documentation
+- Concept explanations  
+- Experiment design  
 
 ---
 
 ## Quick Start
 
+### Installation
+
 ```bash
 git clone https://github.com/Siva2015143/AI-Agentic-Compute-Criticality.git
 cd AI-Agentic-Compute-Criticality
 pip install -r requirements.txt
+```
 
-# Run experiment
+### Run experiment
+
+```bash
 python minimal_code/agentic_compute_chain_experiment.py --mode P0
+```
 
-# Check your logs
+### Analyze logs
+
+```bash
 python minimal_code/branching_factor_estimator.py --input your_logs.jsonl
 ```
 
-**In Python**:
+### Python usage
+
 ```python
 from branching_factor_estimator import estimate_criticality
 
-b, variance = estimate_criticality('your_logs.jsonl')
+b, variance = estimate_criticality("your_logs.jsonl")
+
 if b > 0.9:
     print(f"Warning: b={b:.2f} approaching critical threshold")
 ```
@@ -112,82 +205,107 @@ if b > 0.9:
 
 ## Core Concepts
 
-**Branching Factor (b)**: Mean children spawned per operation. Single most important metric.
+**Branching Factor (b)**  
+Average number of children per step.
 
-**Amplification Factor (A)**: Actual compute / predicted compute. Observed: 3-21x.
+**Amplification Factor (A)**  
+Actual compute divided by baseline.
 
-**Compute Criticality**: Phase transition at b=1 where cost shifts from deterministic to stochastic.
+**Compute Criticality**  
+Transition from predictable to unstable cost.
 
 ---
 
-## The Nuclear Analogy
+## Nuclear Analogy (Conceptual Mapping)
 
 | Nuclear Physics | Agentic AI |
 |----------------|-----------|
-| Neutron multiplication (k_eff) | Branching factor (b) |
-| Chain reaction threshold | Critical compute threshold |
-| Control rods | Token limits, budget caps |
-| Reactor period | Compute doubling time |
-
-Not metaphor. Formal mathematical mapping with complete derivations.
+| Neutron multiplication | Branching factor |
+| Chain reaction threshold | Critical threshold |
+| Control rods | Budget limits |
+| Reactor period | Compute growth |
 
 ---
 
 ## Why This Matters
 
-**AI Safety**: Cannot establish safety margins without predictable compute.
+### AI Safety
+Unpredictable compute affects safety guarantees.
 
-**Production**: Traditional cost models fail when b→1. Single queries vary by 10-100x.
+### Production
+Costs vary widely for similar tasks.
 
-**Research**: Pre-2025 scaling laws assumed static inference. Agentic systems require new theory.
+### Research
+Static models do not capture recursive systems.
 
 ---
 
 ## Validation
 
-**NVIDIA GTC 2025**: Jensen Huang reported 100x compute increase. Our model predicts 86x at 20 steps.
+Industry discussions (e.g., NVIDIA GTC 2025) indicate increased compute in agentic systems.
 
-**Theory**: Measured b=0.84 predicts E[operations]=6.25. Observed: 6.1-6.4.
-
----
-
-## For Different Audiences
-
-**Research Labs**: Publication-ready mathematics with reproducible experiments and open data.
-
-**ML Engineers**: Production tools to measure b in your logs. If b>0.8, implement controls.
-
-**Recruiters**: Demonstrates theoretical math, experimental design, systems engineering, technical writing.
-
-**Leadership**: Explains unpredictable inference costs. Solution requires architecture changes, not tuning.
+Experimental results align with theoretical predictions.
 
 ---
 
-## What's Next
+## Audience Guide
 
-**Immediate**: Multi-model comparison, real-world agents, production workloads, control systems
+**Researchers**
+- Study recursive compute behavior
 
-**Research**: Optimal throttling, early warning indicators, multi-agent networks, distributed dynamics
+**Engineers**
+- Measure branching in logs
 
-Full roadmap: `insights/future_work.md`
+**Recruiters**
+- Demonstrates math + systems + coding
+
+**Leadership**
+- Explains cost unpredictability
 
 ---
+
+## Future Work
+
+### Immediate
+- Multi-model experiments  
+- Real workloads  
+
+### Research
+- Early warning signals  
+- Control strategies  
+- Multi-agent systems  
+
+➡️ See roadmap: `insights/future_work.md`
+
+---
+
+## Citation
+
+If you use this work, please cite:
+
+**Battala, S.**  
+*Agentic Compute Criticality: A Proof-of-Concept Framework for Measuring Branching-Process Amplification in Recursive LLM Inference*  
+🔗 https://doi.org/10.5281/zenodo.19469219  
+
+---
+
+## License
+
+This project should include an MIT License (see `LICENSE` file).
 
 ---
 
 ## Contact
 
 **Sivamani Battala**  
-Independent AI Compute Researcher
+Independent AI Compute Researcher  
 
-sivamani6104@gmail.com  
-+91-9014566762  
-[GitHub](https://github.com/Siva2015143) • [LinkedIn](https://linkedin.com/in/sivamani-battala)
+📧 Email: [sivamani6104@gmail.com](mailto:sivamani6104@gmail.com)  
+💻 GitHub: https://github.com/Siva2015143  
+🔗 LinkedIn: https://linkedin.com/in/sivamani-battala  
 
-Open to research collaborations, consulting, and full-time positions in AI safety, infrastructure optimization, systems research.
+Open to research collaboration, consulting, and AI roles.
 
 ---
 
-
-
-**Active research • December 2025 • Freely available for academic and commercial use**
+**Active research • April 2026**
